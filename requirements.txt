@@ -1,0 +1,17 @@
+# Core
+numpy>=1.26
+scipy>=1.11
+pandas>=2.1
+h5py>=3.10          # reads the MATLAB v7.3 batch files
+scikit-learn>=1.4   # elastic net, random forest, gradient boosting, Gaussian process
+pyyaml>=6.0
+tqdm>=4.66
+
+# Deep models (1D CNN, deep ensembles).
+# On an RTX 50-series GPU install the CUDA build first (see README), then this line is satisfied.
+torch>=2.7
+
+# Analysis
+matplotlib>=3.8
+jupyterlab>=4.0
+pytest>=8.0
