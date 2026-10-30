@@ -23,11 +23,13 @@ Put them directly in `data/raw/`. The file names are listed in `configs/default.
   `src/battery_ml/data/loader.py` for the fields.
 - `cells_summary.csv` — one row per cell: batch, charging policy, cycle life, split.
 
-## Conventions to check during exploration
+## Conventions
 
-- **Curve indexing.** Row `k` of `Qdlin` / `Tdlin` is entry `k` of the struct's `cycles`
-  array, and the code treats that as cycle number `k`. Severson's ΔQ₁₀₀₋₁₀ is then
-  `Qdlin[100] - Qdlin[10]`. Confirm this against `summary["cycle"]` in your first notebook.
+- **Curve indexing.** Cycles are numbered from 1, as in `summary["cycle"]`, which has one
+  entry per curve row. So row `k` of `Qdlin` / `Tdlin` is cycle `k + 1`. This was checked
+  on the real data: cycle-to-cycle changes in `Qdlin[:, -1]` track changes in
+  `summary["QD"]` only at the same array position. `delta_q` takes cycle numbers, so
+  Severson's ΔQ₁₀₀₋₁₀ is `Qdlin[99] - Qdlin[9]`. In batch 1, row 0 (cycle 1) is all NaN.
 - **Summary indexing.** Summary features look cycles up by value in `summary["cycle"]`,
   not by array position, so they do not depend on that convention.
 - **Voltage grid.** `Qdlin` is interpolated on 1000 points from 3.6 V down to 2.0 V

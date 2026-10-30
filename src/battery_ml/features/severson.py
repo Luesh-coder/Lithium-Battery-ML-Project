@@ -13,11 +13,11 @@ FEATURE_SETS = ("variance", "discharge", "full")
 
 
 def delta_q(cell, ref, last):
-    """delta Q(V) between cycles `last` and `ref` (curve row k holds cycle k)."""
+    """delta Q(V) between cycles `last` and `ref` (cycles start at 1; curve row k holds cycle k + 1)."""
     q = cell["Qdlin"]
-    if last >= len(q):
-        raise ValueError(f"cycle {last} not available; only {len(q)} curves were kept")
-    return q[last].astype(float) - q[ref].astype(float)
+    if ref < 1 or last > len(q):
+        raise ValueError(f"cycles must be in 1..{len(q)} (the curves that were kept); got {ref} and {last}")
+    return q[last - 1].astype(float) - q[ref - 1].astype(float)
 
 
 def _summary_window(cell, key, first, last):

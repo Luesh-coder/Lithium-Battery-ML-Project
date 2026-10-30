@@ -15,12 +15,15 @@ def test_feature_table_shapes(cells, feature_set, n_features, ref, last):
 
 def test_delta_q_is_curve_difference(cells):
     cell = cells["b1c0"]
-    np.testing.assert_allclose(delta_q(cell, 10, 100), cell["Qdlin"][100] - cell["Qdlin"][10], atol=1e-6)
+    # cycles start at 1, so cycle k is curve row k - 1
+    np.testing.assert_allclose(delta_q(cell, 10, 100), cell["Qdlin"][99] - cell["Qdlin"][9], atol=1e-6)
+    np.testing.assert_allclose(delta_q(cell, 1, 120), cell["Qdlin"][119] - cell["Qdlin"][0], atol=1e-6)
 
 
-def test_delta_q_rejects_unkept_cycles(cells):
+@pytest.mark.parametrize("ref,last", [(10, 121), (10, 500), (0, 100)])
+def test_delta_q_rejects_unkept_cycles(cells, ref, last):
     with pytest.raises(ValueError):
-        delta_q(cells["b1c0"], 10, 500)
+        delta_q(cells["b1c0"], ref, last)
 
 
 def test_delta_q_curves_shape(cells):

@@ -21,6 +21,7 @@ Severson et al. (2019). The full proposal is in [reports/proposal.pdf](reports/p
 ├── scripts/                    entry points, run in order
 │   ├── preprocess.py           raw .mat -> cleaned 124-cell dataset
 │   ├── train_baselines.py      elastic net / random forest / gradient boosting
+│   ├── plot_baselines.py       result figures -> results/figures/
 │   ├── train_cnn.py            1D CNN on Q(V) curves              (to implement)
 │   └── run_uncertainty.py      Gaussian process vs deep ensembles (to implement)
 ├── src/battery_ml/             importable package used by scripts and notebooks
@@ -28,7 +29,7 @@ Severson et al. (2019). The full proposal is in [reports/proposal.pdf](reports/p
 │   ├── data/                   loader.py (h5py reader + cleaning), splits.py
 │   ├── features/               severson.py (variance/discharge/full), curves.py
 │   ├── models/                 baselines.py, cnn.py, gaussian_process.py, deep_ensemble.py
-│   └── evaluation/metrics.py   RMSE, MAPE, interval coverage and width
+│   └── evaluation/             metrics.py (RMSE, MAPE, interval coverage/width), plots.py
 └── tests/                      pytest suite (runs on synthetic data, no download needed)
 ```
 
@@ -63,7 +64,11 @@ If PowerShell blocks `Activate.ps1`, run
    python scripts/train_baselines.py --feature-set variance
    python scripts/train_baselines.py --feature-set full --windows 100 50
    ```
-   Scores go to `results/metrics/baselines_<feature-set>.csv`.
+   Scores go to `results/metrics/baselines_<feature-set>.csv`. Plot them (PNG + PDF in
+   `results/figures/`) with:
+   ```powershell
+   python scripts/plot_baselines.py --window 100
+   ```
 4. **1D CNN**: implement `src/battery_ml/models/cnn.py`, then run `scripts/train_cnn.py`.
 5. **Uncertainty**: implement `gaussian_process.py` and `deep_ensemble.py`, then run
    `scripts/run_uncertainty.py`.
@@ -84,8 +89,9 @@ If PowerShell blocks `Activate.ps1`, run
 ## Notes
 
 - **Splits.** Train has 41 cells, primary test 43, secondary test 40, following [1].
-  Severson et al. also report primary-test results with one outlier cell removed; check
-  their paper for which cell before comparing against those numbers.
+  Severson et al. also report primary-test results with one outlier cell removed. That
+  cell is b2c1, which reaches 80% capacity after 148 cycles. Our primary test set keeps
+  it, so compare against their non-parenthetical numbers.
 - **Target.** Models regress log10(cycle life) by default (`features.log_target`), and
   metrics are computed after converting back to cycles.
 - **Shorter windows.** The reference cycles for the 50, 20, and 10-cycle windows in

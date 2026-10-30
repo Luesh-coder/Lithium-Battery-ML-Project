@@ -28,7 +28,7 @@ def write_fake_batch(path, n_cells):
         for i in range(n_cells):
             summary = refs.create_group(f"summary{i}")
             for name in SUMMARY_FIELDS:
-                values = np.arange(N_CYCLES, dtype=float) if name == "cycle" else np.full(N_CYCLES, float(i))
+                values = np.arange(1, N_CYCLES + 1, dtype=float) if name == "cycle" else np.full(N_CYCLES, float(i))
                 summary.create_dataset(name, data=values[None, :])
             fields["summary"][i, 0] = summary.ref
 
@@ -59,7 +59,7 @@ def test_build_dataset_matches_published_cleaning(tmp_path):
     assert b1c0["cycle_life"] == 500.0 + 662
     assert b1c0["policy"] == POLICY
     assert b1c0["n_cycles"] == 2 * N_CYCLES
-    np.testing.assert_array_equal(b1c0["summary"]["cycle"], np.arange(2 * N_CYCLES))
+    np.testing.assert_array_equal(b1c0["summary"]["cycle"], np.arange(1, 2 * N_CYCLES + 1))
     assert b1c0["Qdlin"].shape == (KEEP_CYCLES, N_VOLTAGE_POINTS)
     np.testing.assert_allclose(b1c0["Qdlin"][N_CYCLES], 7.0)  # first continuation cycle of b2c7
 

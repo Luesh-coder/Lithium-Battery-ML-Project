@@ -8,7 +8,7 @@ def make_cell(seed, n_cycles=120, cycle_life=800.0):
     """A synthetic cell shaped like the output of battery_ml.data.loader."""
     rng = np.random.default_rng(seed)
     fade = 1e-4 * (1 + rng.random())
-    cycles = np.arange(n_cycles, dtype=float)
+    cycles = np.arange(1, n_cycles + 1, dtype=float)  # numbered from 1, like the real summary
     v = np.linspace(0, 1, N_VOLTAGE_POINTS)
     qdlin = 1.1 * v * (1 - fade * cycles[:, None]) + 1e-4 * rng.standard_normal((n_cycles, N_VOLTAGE_POINTS))
     return {

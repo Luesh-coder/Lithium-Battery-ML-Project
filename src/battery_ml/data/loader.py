@@ -14,8 +14,11 @@ Each cell is stored as a dict:
     batch       "b1" | "b2" | "b3"
     n_cycles    total cycles recorded
     summary     per-cycle arrays: cycle, QD, QC, IR, Tavg, Tmin, Tmax, chargetime
-    Qdlin       (keep_cycles, 1000) discharge capacity on VOLTAGE_GRID, row k = cycle k
-    Tdlin       (keep_cycles, 1000) temperature on VOLTAGE_GRID, row k = cycle k
+    Qdlin       (keep_cycles, 1000) discharge capacity on VOLTAGE_GRID, row k = cycle k + 1
+    Tdlin       (keep_cycles, 1000) temperature on VOLTAGE_GRID, row k = cycle k + 1
+
+Cycles are numbered from 1, as in summary["cycle"], which has one entry per curve row.
+In batch 1, row 0 (cycle 1) is all NaN.
 """
 
 import pickle
