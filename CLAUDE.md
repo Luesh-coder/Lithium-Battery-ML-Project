@@ -25,7 +25,7 @@ analysis and report.
 | Elastic net, random forest, gradient boosting | `src/battery_ml/models/baselines.py`, `scripts/train_baselines.py` | done |
 | RMSE, MAPE, interval coverage and width | `src/battery_ml/evaluation/metrics.py` | done, tested |
 | Result figures (metric bars, predicted vs observed) | `src/battery_ml/evaluation/plots.py`, `scripts/plot_baselines.py` | done, smoke-tested |
-| 1D CNN (`CycleLifeCNN`) | `src/battery_ml/models/cnn.py`, `scripts/train_cnn.py` | **stub** (`NotImplementedError`) |
+| 1D CNN (`CycleLifeCNN`, `CNNRegressor`) | `src/battery_ml/models/cnn.py`, `scripts/train_cnn.py` | prototype, tested on synthetic data; not yet tuned on the real data |
 | Gaussian process (`fit_gp`, `predict_interval`) | `src/battery_ml/models/gaussian_process.py` | **stub** |
 | Deep ensemble (`DeepEnsemble`) | `src/battery_ml/models/deep_ensemble.py` | **stub** |
 | GP vs ensemble comparison | `scripts/run_uncertainty.py` | **stub** |
@@ -44,9 +44,13 @@ implementing.
 
 Windows 11, PowerShell. Python 3.12 venv at `.venv/` with the package installed editable
 (`pip install -e .`). PyTorch is the CUDA 12.8 build (RTX 50-series GPU).
+On Google Colab, use `colab/colab_setup.ipynb` instead. It uses no venv (Colab's preinstalled
+PyTorch and other packages), and it replaces `data/preprocessed/` and `results/` with symlinks
+to `MyDrive/battery-ml/` on Drive. Keep it working when adding scripts or changing paths.
 
 ```powershell
-.venv\Scripts\python.exe -m pytest                       # 18 tests, synthetic data, ~5 s
+.venv\Scripts\python.exe -m pytest                       # 28 tests, synthetic data (test_cnn skips without torch)
+.venv\Scripts\python.exe scripts/train_cnn.py --windows 100 [--scalar-features full]   # -> results/metrics/cnn[_full]*.csv, results/models/
 .venv\Scripts\python.exe scripts/preprocess.py           # raw .mat -> data/preprocessed/cells.pkl + cells_summary.csv
 .venv\Scripts\python.exe scripts/train_baselines.py --feature-set variance
 .venv\Scripts\python.exe scripts/train_baselines.py --feature-set full --windows 100 50 --models elastic_net
@@ -81,6 +85,15 @@ package) → `configs/default.yaml` (every path, window, and hyperparameter).
   pair per window comes from `windows:` in the config.
 - **`models/__init__.py`** exports only the sklearn baselines, so the classical pipeline
   works without importing torch. Import `models.cnn` and `models.deep_ensemble` directly.
+- **`models/cnn.py`**: `CycleLifeCNN` is the network (conv blocks over the voltage axis, then
+  a dense head that can also take Severson scalar features; `n_outputs=2` is meant for the
+  deep ensemble's mean and variance). `CNNRegressor` wraps it with sklearn-style
+  `fit` / `predict`. `fit` learns all scaling (optional asinh on ΔQ, then per-channel
+  standardization, scalar and target standardization) from the cells it is given, so pass
+  train only. It holds out `val_fraction` of them (`validation_split`, spread over cycle
+  life) and keeps the weights from the epoch with the lowest validation loss.
+  Checkpoints load with `torch.load(..., weights_only=True)`. Settings are under `cnn:`
+  in the config.
 - **`evaluation/plots.py`** builds figures from the long-format results CSVs. It uses
   `matplotlib.figure.Figure` directly (no pyplot), and `use_style()` applies the shared
   style. Color always means the split: train is gray, primary test is blue `#2a78d6`, and

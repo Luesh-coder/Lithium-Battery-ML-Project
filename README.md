@@ -8,6 +8,7 @@ Severson et al. (2019). The full proposal is in [reports/proposal.pdf](reports/p
 ## Project layout
 
 ```
+├── colab/colab_setup.ipynb     run on Google Colab (no venv; data and results on Drive)
 ├── configs/default.yaml        all paths, windows, and hyperparameters
 ├── data/
 │   ├── raw/                    the 3 batch .mat files (download; see data/README.md)
@@ -22,7 +23,7 @@ Severson et al. (2019). The full proposal is in [reports/proposal.pdf](reports/p
 │   ├── preprocess.py           raw .mat -> cleaned 124-cell dataset
 │   ├── train_baselines.py      elastic net / random forest / gradient boosting
 │   ├── plot_baselines.py       result figures -> results/figures/
-│   ├── train_cnn.py            1D CNN on Q(V) curves              (to implement)
+│   ├── train_cnn.py            1D CNN on delta Q(V) curves (prototype)
 │   └── run_uncertainty.py      Gaussian process vs deep ensembles (to implement)
 ├── src/battery_ml/             importable package used by scripts and notebooks
 │   ├── config.py
@@ -52,6 +53,21 @@ If PowerShell blocks `Activate.ps1`, run
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or call
 `.venv\Scripts\python.exe` directly.
 
+## Setup (Google Colab)
+
+Open [`colab/colab_setup.ipynb`](colab/colab_setup.ipynb) in Colab (**File → Open notebook →
+GitHub**). Don't create a venv there. Colab's Python already has the GPU build of PyTorch and
+the other dependencies, so the notebook only runs `pip install -e .`.
+
+1. **Cell 1 (every session)** clones or pulls the repo, installs the package, and runs the tests.
+   Colab's disk is wiped when the runtime disconnects, so it also links `data/preprocessed/`
+   and `results/` to `MyDrive/battery-ml/` on Google Drive.
+2. **Cell 2 (first session only)** downloads the raw data (8.3 GB) to the Colab disk and runs
+   `scripts/preprocess.py`. Once `cells.pkl` is on Drive, it skips itself.
+3. **Cell 3** runs the baselines.
+
+Edit code on your own machine and push. Cell 1 pulls the latest commit.
+
 ## Running the pipeline
 
 1. **Download the data** into `data/raw/` (see [data/README.md](data/README.md)).
@@ -69,7 +85,14 @@ If PowerShell blocks `Activate.ps1`, run
    ```powershell
    python scripts/plot_baselines.py --window 100
    ```
-4. **1D CNN**: implement `src/battery_ml/models/cnn.py`, then run `scripts/train_cnn.py`.
+4. **1D CNN** on ΔQ(V) curves, optionally with a Severson feature set in its dense head:
+   ```powershell
+   python scripts/train_cnn.py --windows 100
+   python scripts/train_cnn.py --windows 100 --scalar-features full
+   ```
+   Scores go to `results/metrics/cnn.csv` (or `cnn_<feature-set>.csv`), with per-cell
+   predictions, a per-epoch loss history, and checkpoints in `results/models/`. The
+   settings are under `cnn:` in `configs/default.yaml`.
 5. **Uncertainty**: implement `gaussian_process.py` and `deep_ensemble.py`, then run
    `scripts/run_uncertainty.py`.
 
@@ -81,7 +104,7 @@ If PowerShell blocks `Activate.ps1`, run
 | Original train / primary / secondary test splits from [1] | `data/splits.py` | ready |
 | ΔQ(V) variance feature (plus discharge and full sets from [1]) | `features/severson.py` | ready |
 | 1. Elastic net, random forest, gradient boosting | `models/baselines.py`, `scripts/train_baselines.py` | ready |
-| 2. 1D CNN on Q(V) curves | `models/cnn.py`, `scripts/train_cnn.py` | stub |
+| 2. 1D CNN on Q(V) curves | `models/cnn.py`, `scripts/train_cnn.py` | prototype |
 | 3. Early prediction with 100 / 50 / 20 / 10 cycles | `windows:` in `configs/default.yaml` | ready for baselines |
 | 4. Gaussian process vs deep ensembles | `models/gaussian_process.py`, `models/deep_ensemble.py` | stub |
 | RMSE, MAPE, interval coverage and width | `evaluation/metrics.py` | ready |

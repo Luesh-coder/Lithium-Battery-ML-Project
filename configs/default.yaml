@@ -43,11 +43,25 @@ baselines:
     learning_rate: 0.05
     max_depth: 3
 
+# 1D CNN on delta Q(V) curves (scripts/train_cnn.py). The training split has only 41
+# cells, so the network is small (~13k weights) and uses dropout, weight decay, and
+# early stopping on held-out training cells.
 cnn:
-  epochs: 300
-  batch_size: 16
-  learning_rate: 1.0e-3
-  weight_decay: 1.0e-4
+  scalar_features: null     # null = curves only, or variance | discharge | full: Severson features [1] added to the dense head
+  architecture:
+    conv_channels: [8, 16, 32]   # one Conv1d -> ReLU -> MaxPool1d block per entry
+    kernel_size: 7
+    pool_size: 4
+    pooled_length: 8             # adaptive average pool to this many points before the dense head
+    hidden_units: 32
+    dropout: 0.2
+  training:
+    curve_transform: asinh  # none | asinh: asinh(dQ / median |dQ|) compresses the decades-wide range of delta Q
+    val_fraction: 0.2       # training cells held out for early stopping, spread over cycle life
+    epochs: 300
+    batch_size: 16
+    learning_rate: 1.0e-3
+    weight_decay: 1.0e-2    # AdamW (decoupled) weight decay
 
 uncertainty:
   interval_level: 0.95    # nominal coverage of prediction intervals
